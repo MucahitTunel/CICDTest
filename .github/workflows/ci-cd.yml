@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
     
     steps:
@@ -28,26 +29,48 @@ jobs:
       run: |
         npm install
         bundle install
+
+    - name: Run tests
+      run: npm test
         
+    - name: Build Android
+      run: cd android && ./gradlew assembleRelease
+
+    - name: Build iOS
+      run: cd ios && xcodebuild -workspace AIApp.xcworkspace -scheme AIApp -configuration Release
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: app-builds
+        path: |
+          android/app/build/outputs/apk/release/
+          ios/build/Release-iphoneos/
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.1'
+        bundler-cache: true
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: app-builds
+
     - name: Copy environment file
-      run: |
-        if [[ $GITHUB_REF == "refs/heads/production" ]]; then
-          cp .env.production .env
-        elif [[ $GITHUB_REF == "refs/heads/main" ]]; then
-          cp .env.staging .env
-        else
-          cp .env.staging .env
-        fi
+      run: cp .env.staging .env
         
-    - name: Run Fastlane
+    - name: Deploy with Fastlane
       run: |
-        if [[ $GITHUB_REF == "refs/heads/production" ]]; then
-          bundle exec fastlane ios production
-          bundle exec fastlane android production
-        elif [[ $GITHUB_REF == "refs/heads/main" ]]; then
-          bundle exec fastlane ios staging
-          bundle exec fastlane android staging
-        else
-          bundle exec fastlane ios staging
-          bundle exec fastlane android staging
-        fi 
+        bundle exec fastlane ios staging
+        bundle exec fastlane android staging 
