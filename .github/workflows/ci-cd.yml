@@ -1,0 +1,53 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, staging, production ]
+  pull_request:
+    branches: [ main, staging, production ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.7'
+        bundler-cache: true
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: |
+        npm install
+        bundle install
+        
+    - name: Copy environment file
+      run: |
+        if [[ $GITHUB_REF == "refs/heads/production" ]]; then
+          cp .env.production .env
+        elif [[ $GITHUB_REF == "refs/heads/main" ]]; then
+          cp .env.staging .env
+        else
+          cp .env.staging .env
+        fi
+        
+    - name: Run Fastlane
+      run: |
+        if [[ $GITHUB_REF == "refs/heads/production" ]]; then
+          bundle exec fastlane ios production
+          bundle exec fastlane android production
+        elif [[ $GITHUB_REF == "refs/heads/main" ]]; then
+          bundle exec fastlane ios staging
+          bundle exec fastlane android staging
+        else
+          bundle exec fastlane ios staging
+          bundle exec fastlane android staging
+        fi 
