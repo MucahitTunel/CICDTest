@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main, staging, production ]
+    branches: [ main, development, staging, production ]
   pull_request:
-    branches: [ main, staging, production ]
+    branches: [ main, development, staging, production ]
 
 jobs:
   build:
