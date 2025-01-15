@@ -27,25 +27,17 @@ jobs:
         
     - name: Install dependencies
       run: |
-        npm install
+        pnpm install
         bundle install
 
     - name: Run tests
-      run: npm test
+      run: pnpm test
         
     - name: Build Android
       run: cd android && ./gradlew assembleRelease
 
     - name: Build iOS
       run: cd ios && xcodebuild -workspace AIApp.xcworkspace -scheme AIApp -configuration Release
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-builds
-        path: |
-          android/app/build/outputs/apk/release/
-          ios/build/Release-iphoneos/
 
   deploy:
     name: Deploy
@@ -61,11 +53,6 @@ jobs:
       with:
         ruby-version: '3.1'
         bundler-cache: true
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: app-builds
 
     - name: Copy environment file
       run: cp .env.staging .env
