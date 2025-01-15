@@ -9,3 +9,4 @@ gem 'activesupport', '>= 6.1.7.5', '!= 7.1.0'
 gem 'xcodeproj', '< 1.26.0'
 
 gem "fastlane"
+
